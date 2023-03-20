@@ -1,5 +1,5 @@
-const { Octokit } = require("@octokit/rest");
-const { throttling } = require("@octokit/plugin-throttling");
+const {Octokit} = require('@octokit/rest');
+const {throttling} = require('@octokit/plugin-throttling');
 
 /* Variables that should be cleared for every new query (defaults are set in "clear_old_data"). */
 let REPO_DATE;
@@ -8,6 +8,9 @@ let RATE_LIMIT_EXCEEDED;
 let AHEAD_COMMITS_FILTER;
 let TOTAL_API_CALLS_COUNTER;
 let ONGOING_REQUESTS_COUNTER = 0;
+
+
+
 
 /** Used to reset the state for a brand new query. */
 function clear_old_data() {
@@ -39,17 +42,31 @@ function badge_width(number) {
 
 /** Credits to https://shields.io/ */
 function ahead_badge(amount) {
-  return '<svg xmlns="http://www.w3.org/2000/svg" width="88" height="24" role="img"><title>How far ahead this fork\'s default branch is compared to its parent\'s default branch</title><linearGradient id="s" x2="0" y2="100%"><stop offset="0" stop-color="#fff" stop-opacity=".7"/><stop offset=".1" stop-color="#aaa" stop-opacity=".1"/><stop offset=".9" stop-color="#000" stop-opacity=".3"/><stop offset="1" stop-color="#000" stop-opacity=".5"/></linearGradient><clipPath id="r"><rect width="88" height="18" rx="4" fill="#fff"/></clipPath><g clip-path="url(#r)"><rect width="43" height="18" fill="#555"/><rect x="43" width="45" height="18" fill="#007ec6"/><rect width="88" height="18" fill="url(#s)"/></g><g fill="#fff" text-anchor="middle" font-family="Verdana,Geneva,DejaVu Sans,sans-serif" text-rendering="geometricPrecision" font-size="110"><text aria-hidden="true" x="225" y="140" fill="#010101" fill-opacity=".3" transform="scale(.1)" textLength="330">ahead</text><text x="225" y="130" transform="scale(.1)" fill="#fff" textLength="330">ahead</text><text x="645" y="130" transform="scale(.1)" fill="#fff" textLength="' + badge_width(amount) + '">' + amount + '</text></g></svg>';
+  return (
+    '<svg xmlns="http://www.w3.org/2000/svg" width="88" height="24" role="img"><title>How far ahead this fork\'s default branch is compared to its parent\'s default branch</title><linearGradient id="s" x2="0" y2="100%"><stop offset="0" stop-color="#fff" stop-opacity=".7"/><stop offset=".1" stop-color="#aaa" stop-opacity=".1"/><stop offset=".9" stop-color="#000" stop-opacity=".3"/><stop offset="1" stop-color="#000" stop-opacity=".5"/></linearGradient><clipPath id="r"><rect width="88" height="18" rx="4" fill="#fff"/></clipPath><g clip-path="url(#r)"><rect width="43" height="18" fill="#555"/><rect x="43" width="45" height="18" fill="#007ec6"/><rect width="88" height="18" fill="url(#s)"/></g><g fill="#fff" text-anchor="middle" font-family="Verdana,Geneva,DejaVu Sans,sans-serif" text-rendering="geometricPrecision" font-size="110"><text aria-hidden="true" x="225" y="140" fill="#010101" fill-opacity=".3" transform="scale(.1)" textLength="330">ahead</text><text x="225" y="130" transform="scale(.1)" fill="#fff" textLength="330">ahead</text><text x="645" y="130" transform="scale(.1)" fill="#fff" textLength="' +
+    badge_width(amount) +
+    '">' +
+    amount +
+    '</text></g></svg>'
+  );
 }
 
 /** Credits to https://shields.io/ */
 function behind_badge(amount) {
   const color = amount === 0 ? '#4c1' : '#007ec6'; // green only when not behind, blue otherwise
-  return '<svg xmlns="http://www.w3.org/2000/svg" width="92" height="24" role="img"><title>How far behind this fork\'s default branch is compared to its parent\'s default branch</title><linearGradient id="s" x2="0" y2="100%"><stop offset="0" stop-color="#fff" stop-opacity=".7"/><stop offset=".1" stop-color="#aaa" stop-opacity=".1"/><stop offset=".9" stop-color="#000" stop-opacity=".3"/><stop offset="1" stop-color="#000" stop-opacity=".5"/></linearGradient><clipPath id="r"><rect width="92" height="18" rx="4" fill="#fff"/></clipPath><g clip-path="url(#r)"><rect width="47" height="18" fill="#555"/><rect x="47" width="45" height="18" fill="'+ color +'"/><rect width="92" height="18" fill="url(#s)"/></g><g fill="#fff" text-anchor="middle" font-family="Verdana,Geneva,DejaVu Sans,sans-serif" text-rendering="geometricPrecision" font-size="110"><text aria-hidden="true" x="245" y="140" fill="#010101" fill-opacity=".3" transform="scale(.1)" textLength="370">behind</text><text x="245" y="130" transform="scale(.1)" fill="#fff" textLength="370">behind</text><text x="685" y="130" transform="scale(.1)" fill="#fff" textLength="' + badge_width(amount) + '">' + amount + '</text></g></svg>';
+  return (
+    '<svg xmlns="http://www.w3.org/2000/svg" width="92" height="24" role="img"><title>How far behind this fork\'s default branch is compared to its parent\'s default branch</title><linearGradient id="s" x2="0" y2="100%"><stop offset="0" stop-color="#fff" stop-opacity=".7"/><stop offset=".1" stop-color="#aaa" stop-opacity=".1"/><stop offset=".9" stop-color="#000" stop-opacity=".3"/><stop offset="1" stop-color="#000" stop-opacity=".5"/></linearGradient><clipPath id="r"><rect width="92" height="18" rx="4" fill="#fff"/></clipPath><g clip-path="url(#r)"><rect width="47" height="18" fill="#555"/><rect x="47" width="45" height="18" fill="' +
+    color +
+    '"/><rect width="92" height="18" fill="url(#s)"/></g><g fill="#fff" text-anchor="middle" font-family="Verdana,Geneva,DejaVu Sans,sans-serif" text-rendering="geometricPrecision" font-size="110"><text aria-hidden="true" x="245" y="140" fill="#010101" fill-opacity=".3" transform="scale(.1)" textLength="370">behind</text><text x="245" y="130" transform="scale(.1)" fill="#fff" textLength="370">behind</text><text x="685" y="130" transform="scale(.1)" fill="#fff" textLength="' +
+    badge_width(amount) +
+    '">' +
+    amount +
+    '</text></g></svg>'
+  );
 }
 
 function getTdValue(rows, index, col) {
-  return Number(rows.item(index).getElementsByTagName('td').item(col).getAttribute("value"));
+  return Number(rows.item(index).getElementsByTagName('td').item(col).getAttribute('value'));
 }
 
 function sortTable() {
@@ -57,25 +74,24 @@ function sortTable() {
 }
 
 /** 'sortColumn' index starts at 0.   https://stackoverflow.com/a/37814596/9768291 */
-function sortTableColumn(table_id, sortColumn){
+function sortTableColumn(table_id, sortColumn) {
   let tableData = document.getElementById(table_id).getElementsByTagName('tbody').item(0);
   let rows = tableData.getElementsByTagName('tr');
-  for(let i = 0; i < rows.length - 1; i++) {
-    for(let j = 0; j < rows.length - (i + 1); j++) {
-      if(getTdValue(rows, j, sortColumn) < getTdValue(rows, j+1, sortColumn)) {
-        tableData.insertBefore(rows.item(j+1), rows.item(j));
+  for (let i = 0; i < rows.length - 1; i++) {
+    for (let j = 0; j < rows.length - (i + 1); j++) {
+      if (getTdValue(rows, j, sortColumn) < getTdValue(rows, j + 1, sortColumn)) {
+        tableData.insertBefore(rows.item(j + 1), rows.item(j));
       }
     }
   }
 }
 
 function isEmpty(aList) {
-  return (!aList || aList.length === 0);
+  return !aList || aList.length === 0;
 }
 
 function displayConditionalErrorMsg() {
-  if (!RATE_LIMIT_EXCEEDED)
-    setMsg(UF_MSG_ERROR);
+  if (!RATE_LIMIT_EXCEEDED) setMsg(UF_MSG_ERROR);
 }
 
 function incrementCounters() {
@@ -112,8 +128,7 @@ function decrementCounters() {
 }
 
 function searchNotAllowed() {
-  if (shouldTriggerQueryOnTokenSave)
-    return false;
+  if (shouldTriggerQueryOnTokenSave) return false;
   return ONGOING_REQUESTS_COUNTER !== 0 || JQ_SEARCH_BTN.hasClass('is-loading');
 }
 
@@ -125,23 +140,26 @@ function send(requestPromise, successFn, failureFn) {
 
   incrementCounters();
   requestPromise()
-  .then(
-      response => successFn(response.headers, response.data)) // wrapped in a { data, headers, status, url } object
-  .catch(
-      () => failureFn())
-  .finally(
-      () => decrementCounters());
+    .then(response => successFn(response.headers, response.data)) // wrapped in a { data, headers, status, url } object
+    .catch(() => failureFn())
+    .finally(() => decrementCounters());
 }
 
 /** Fills the first part of a row. */
-function build_fork_element_html(table_body, combined_name, num_stars, num_forks) {
-  const NEW_ROW = $('<tr>', {id: extract_username_from_fork(combined_name), class: "useful_forks_repo"});
+function build_fork_element_html(table_body, combined_name, num_stars, num_forks, clone_url, owner, name, ogauthor) {
+  const NEW_ROW = $('<tr>', {id: extract_username_from_fork(combined_name), class: 'useful_forks_repo'});
   table_body.append(
-      NEW_ROW.append(
-          $('<td>').html(getRepoCol(combined_name, false)).attr("value", combined_name),
-          $('<td>').html(UF_TABLE_SEPARATOR + getStarCol(num_stars)).attr("value", num_stars),
-          $('<td>').html(UF_TABLE_SEPARATOR + getForkCol(num_forks)).attr("value", num_forks)
-      )
+    NEW_ROW.append(
+      $('<td>').html(getRepoCol(combined_name, false)).attr('value', combined_name),
+      $('<td>')
+        .html(UF_TABLE_SEPARATOR + getStarCol(num_stars))
+        .attr('value', num_stars),
+      $('<td>')
+        .html(UF_TABLE_SEPARATOR + getForkCol(num_forks))
+        .attr('value', num_forks),
+      $('<td>').html(UF_TABLE_SEPARATOR + `<a href="${clone_url}" target="_blank">clone</a>`),
+      $('<td>').html(UF_TABLE_SEPARATOR + `<a onclick='getCommits("${owner}", "${name}", "${ogauthor}")'>get commits</a>`)
+    ),
   );
   return NEW_ROW;
 }
@@ -152,29 +170,31 @@ function compareDates(date, html) {
 }
 
 /** Prepares, appends, and updates a table row. */
-function add_fork_elements(forkdata_array, user, repo, parentDefaultBranch) {
-  if (isEmpty(forkdata_array))
-    return;
+function add_fork_elements(forkdata_array, user, repo, parentDefaultBranch, ogauthor) {
+  if (isEmpty(forkdata_array)) return;
 
-  if (!RATE_LIMIT_EXCEEDED) // because some times gets called after some other msgs are displayed
+  if (!RATE_LIMIT_EXCEEDED)
+    // because some times gets called after some other msgs are displayed
     clearNonErrorMsg();
 
   let table_body = getTableBody();
   for (const currFork of forkdata_array) {
-
+    console.log(parentDefaultBranch);
     /* Basic data (name/stars/forks). */
-    const NEW_ROW = build_fork_element_html(table_body, currFork.full_name, currFork.stargazers_count, currFork.forks_count);
+    const NEW_ROW = build_fork_element_html(table_body, currFork.full_name, currFork.stargazers_count, currFork.forks_count, currFork.clone_url, currFork.owner.login, currFork.name, ogauthor);
 
-    if (RATE_LIMIT_EXCEEDED) // we can skip everything below because they are only requests
+    if (RATE_LIMIT_EXCEEDED)
+      // we can skip everything below because they are only requests
       continue;
 
     /* Commits diff data (ahead/behind). */
-    const requestPromise = () => octokit.repos.compareCommits({
-      owner: user,
-      repo: repo,
-      base: parentDefaultBranch,
-      head: `${extract_username_from_fork(currFork.full_name)}:${currFork.default_branch}`
-    });
+    const requestPromise = () =>
+      octokit.repos.compareCommits({
+        owner: user,
+        repo: repo,
+        base: parentDefaultBranch,
+        head: `${extract_username_from_fork(currFork.full_name)}:${currFork.default_branch}`,
+      });
     const onSuccess = (responseHeaders, responseData) => {
       if (responseData.total_commits <= AHEAD_COMMITS_FILTER) {
         NEW_ROW.remove();
@@ -186,11 +206,13 @@ function add_fork_elements(forkdata_array, user, repo, parentDefaultBranch) {
         const pushed_at = getOnlyDate(currFork.pushed_at);
         const date_txt = compareDates(pushed_at, getDateCol(pushed_at));
         NEW_ROW.append(
-            $('<td>').html(UF_TABLE_SEPARATOR),
-            $('<td>', {class: "uf_badge"}).html(ahead_badge(responseData.ahead_by)).attr("value", responseData.ahead_by),
-            $('<td>').html(UF_TABLE_SEPARATOR),
-            $('<td>', {class: "uf_badge"}).html(behind_badge(responseData.behind_by)).attr("value", responseData.behind_by),
-            $('<td>').html(UF_TABLE_SEPARATOR + date_txt).attr("value", pushed_at)
+          $('<td>').html(UF_TABLE_SEPARATOR),
+          $('<td>', {class: 'uf_badge'}).html(ahead_badge(responseData.ahead_by)).attr('value', responseData.ahead_by),
+          $('<td>').html(UF_TABLE_SEPARATOR),
+          $('<td>', {class: 'uf_badge'}).html(behind_badge(responseData.behind_by)).attr('value', responseData.behind_by),
+          $('<td>')
+            .html(UF_TABLE_SEPARATOR + date_txt)
+            .attr('value', pushed_at),
         );
       }
     };
@@ -206,49 +228,77 @@ function add_fork_elements(forkdata_array, user, repo, parentDefaultBranch) {
 
 /** Paginated (index starts at 1) recursive forks scan. */
 function request_fork_page(page_number, user, repo, defaultBranch) {
-  if (RATE_LIMIT_EXCEEDED)
-    return;
-
-  const requestPromise = () => octokit.repos.listForks({
-    owner: user,
-    repo: repo,
-    sort: "stargazers",
-    per_page: 100, // maximum allowed by GitHub
-    page: page_number
-  });
+  if (RATE_LIMIT_EXCEEDED) return;
+  var ogauthor = user;
+  const requestPromise = () =>
+    octokit.repos.listForks({
+      owner: user,
+      repo: repo,
+      sort: 'stargazers',
+      per_page: 100, // maximum allowed by GitHub
+      page: page_number,
+    });
   const onSuccess = (responseHeaders, responseData) => {
     removeProgressBar();
 
-    if (isEmpty(responseData)) // repo has not been forked
+    if (isEmpty(responseData))
+      // repo has not been forked
       return;
 
     sortTable();
 
     /* Pagination (beyond 100 forks). */
-    const link_header = responseHeaders["link"];
+    const link_header = responseHeaders['link'];
     if (link_header) {
       let contains_next_page = link_header.indexOf('>; rel="next"');
       if (contains_next_page !== -1) {
-        request_fork_page(++page_number, user, repo, defaultBranch);
+        request_fork_page(++page_number, user, repo, defaultBranch );
       }
     }
 
     /* Populate the table. */
-    add_fork_elements(responseData, user, repo, defaultBranch);
+    add_fork_elements(responseData, user, repo, defaultBranch, ogauthor);
   };
   const onFailure = () => displayConditionalErrorMsg();
   send(requestPromise, onSuccess, onFailure);
 }
 
+async function getCommits(user, repo, originalAuthor) {
+  let data = await octokit.repos.listCommits({
+    owner: user,
+    repo: repo,
+  }).then((response) => {
+   
+    return response.data;
+  });
+
+  let extraCommits = data.filter((commit) => {
+    return commit.author.login !== originalAuthor;
+  })
+  if (!window.allCommits) {
+    window.allCommits = [];
+  }
+  window.allCommits = window.allCommits.concat(extraCommits);
+  var displayedInfo = window.allCommits.map((commit) => {
+    return `<div class="commit"><a href="${commit.html_url}" target="_blank">${commit.commit.message}</a></div>`;
+  }).join('');
+
+  
+  document.querySelector('.commit-zone').innerHTML = displayedInfo;
+  
+}
+window.getCommits = getCommits;
+    
+
 /** Updates header with Queried Repo info, and initiates forks scan. */
 function initial_request(user, repo) {
-  const requestPromise = () => octokit.repos.get({
-    owner: user,
-    repo: repo
-  });
+  const requestPromise = () =>
+    octokit.repos.get({
+      owner: user,
+      repo: repo,
+    });
   const onSuccess = (responseHeaders, responseData) => {
-    if (isEmpty(responseData))
-      return;
+    if (isEmpty(responseData)) return;
 
     const onlyDate = getOnlyDate(responseData.pushed_at);
     REPO_DATE = new Date(onlyDate);
@@ -262,20 +312,21 @@ function initial_request(user, repo) {
     html_txt += UF_TABLE_SEPARATOR + getDateCol(onlyDate);
 
     /* Warning the user if he's not scanning from the root. */
-    if (responseData.source) { // guarantees both 'source' and 'parent' are present
+    if (responseData.source) {
+      // guarantees both 'source' and 'parent' are present
       html_txt += `<p class="mt-2">`;
 
       const source = responseData.source.full_name;
-      html_txt += getForkButtonLink("Source", source);
+      html_txt += getForkButtonLink('Source', source);
 
       /* If at least 2nd level fork from source. */
       const parent = responseData.parent.full_name;
       if (parent !== source) {
         html_txt += UF_TABLE_SEPARATOR;
-        html_txt += getForkButtonLink("Parent", parent);
+        html_txt += getForkButtonLink('Parent', parent);
       }
 
-      html_txt += "</p>"
+      html_txt += '</p>';
     }
 
     setHeader(html_txt);
@@ -293,14 +344,12 @@ function initial_request(user, repo) {
 
 /** Extracts and sanitizes 'user' and 'repo' values from potential inputs. */
 function initiate_search() {
-
   /* Checking if search is allowed. */
-  if (searchNotAllowed())
-    return; // abort
+  if (searchNotAllowed()) return; // abort
 
   clear_old_data();
 
-  let queryString = getQueryOrDefault("payne911/PieMenu");
+  let queryString = getQueryOrDefault('payne911/PieMenu');
   let queryValues = queryString.split('/').filter(Boolean);
 
   let len = queryValues.length;
@@ -329,8 +378,7 @@ const MyOctokit = Octokit.plugin(throttling);
 let octokit;
 setUpOctokitWithLatestToken();
 function setUpOctokitWithLatestToken() {
-  if (!shouldReconstructOctokit)
-    return;
+  if (!shouldReconstructOctokit) return;
 
   octokit = new MyOctokit({
     auth: LOCAL_STORAGE_GITHUB_ACCESS_TOKEN,
@@ -339,36 +387,38 @@ function setUpOctokitWithLatestToken() {
     throttle: {
       onRateLimit: (retryAfter, options, octokit, retryCount) => {
         onRateLimitExceeded();
-        if (retryCount < 1) { // only retries once
+        if (retryCount < 1) {
+          // only retries once
           return true; // true = retry
         }
       },
-      onSecondaryRateLimit: (retryAfter, options, octokit) => { // slow down
+      onSecondaryRateLimit: (retryAfter, options, octokit) => {
+        // slow down
         setMsg(UF_MSG_SLOWER);
 
         // setup the progress bar
-        if (!getJq_ProgressBar()[0]) { // only if it isn't displayed yet
+        if (!getJq_ProgressBar()[0]) {
+          // only if it isn't displayed yet
           JQ_ID_MSG.after(`<progress class="progress is-small" value="${retryAfter}" max="${retryAfter}">some%</progress>`);
           getJq_ProgressBar().animate(
-            {value: "0"}, // target for the "value" attribute
+            {value: '0'}, // target for the "value" attribute
             {
-                duration: 1000 * retryAfter, // in ms
-                easing: 'linear',
-                done: function() {
-                    getJq_ProgressBar().removeAttr('value'); // for moving bar
-                }
-            }
+              duration: 1000 * retryAfter, // in ms
+              easing: 'linear',
+              done: function () {
+                getJq_ProgressBar().removeAttr('value'); // for moving bar
+              },
+            },
           );
         }
 
         return true; // true = automatically retry after given amount of seconds (usually 1 min)
-      }
-    }
+      },
+    },
   });
 
   shouldReconstructOctokit = false;
 }
-
 
 /* Setting up query triggers. */
 JQ_SEARCH_BTN.click(event => {
@@ -376,7 +426,8 @@ JQ_SEARCH_BTN.click(event => {
   initiate_search();
 });
 JQ_REPO_FIELD.keyup(event => {
-  if (event.keyCode === 13) { // 'ENTER'
+  if (event.keyCode === 13) {
+    // 'ENTER'
     initiate_search();
   }
 });
