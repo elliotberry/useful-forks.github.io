@@ -1,3 +1,10 @@
+require("./lib/jquery-3.6.0.min.js");
+require("./token.js");
+require("./navbar-burger.js");
+require("./settings.js");
+require("./queries-init.js");
+require("./csv-export.js");
+require("./analytics-wrapper.js");
 const {Octokit} = require('@octokit/rest');
 const {throttling} = require('@octokit/plugin-throttling');
 

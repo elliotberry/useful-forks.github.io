@@ -1,6 +1,7 @@
 const SELF_URL = "https://useful-forks.github.io/";
 
 const JQ_REPO_FIELD  = $('#repo');
+const REPO_FIELD = document.getElementById('repo');
 const JQ_SEARCH_BTN  = $('#searchBtn');
 const JQ_TOTAL_CALLS = $('#totalApiCalls');
 
@@ -48,6 +49,19 @@ const SVG_STAR = '<svg class="octicon octicon-star v-align-text-bottom" viewBox=
 const SVG_EYE  = '<svg class="octicon octicon-eye v-align-text-bottom" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" role="img"><title>Amount of watchers</title><path fill-rule="evenodd" d="M8.06 2C3 2 0 8 0 8s3 6 8.06 6C13 14 16 8 16 8s-3-6-7.94-6zM8 12c-2.2 0-4-1.78-4-4 0-2.2 1.8-4 4-4 2.22 0 4 1.8 4 4 0 2.22-1.78 4-4 4zm2-4c0 1.11-.89 2-2 2-1.11 0-2-.89-2-2 0-1.11.89-2 2-2 1.11 0 2 .89 2 2z"></path></svg>';
 const SVG_DATE = '<svg class="octicon octicon-history text-gray" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" role="img"><title>Date of the most recent push in ANY branch of the repository</title><path fill-rule="evenodd" d="M1.643 3.143L.427 1.927A.25.25 0 000 2.104V5.75c0 .138.112.25.25.25h3.646a.25.25 0 00.177-.427L2.715 4.215a6.5 6.5 0 11-1.18 4.458.75.75 0 10-1.493.154 8.001 8.001 0 101.6-5.684zM7.75 4a.75.75 0 01.75.75v2.992l2.028.812a.75.75 0 01-.557 1.392l-2.5-1A.75.75 0 017 8.25v-3.5A.75.75 0 017.75 4z"></path></svg>';
 
+/* checks input for validity */
+function checkInputRegex(input) {
+  const regex = /^[a-z\d](?:[a-z\d]|-(?=[a-z\d])){0,38}\/[a-z\d](?:[a-z\d]|-(?=[a-z\d])){0,100}$/i;
+
+  return regex.test(input);
+}
+REPO_FIELD.addEventListener('change', function() {
+  if (checkInputRegex(REPO_FIELD.value)) {
+    this.classList.remove('invalid');
+  } else {
+    this.classList.add('invalid');
+  }
+});
 function getRepoCol(full_name, isInitialRepo) {
   return SVG_FORK + ` <a href="${buildGithubRepoURL(full_name)}" target="_blank" rel="noopener noreferrer"
                          onclick="ga_queryResultClick('${full_name}', ${isInitialRepo});">${full_name}</a>`;
